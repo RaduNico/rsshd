@@ -6,15 +6,14 @@
 # Settings directory
 SDIR=/etc/ssh
 
-# Make sure we have a root password, since Alpine does not have a root
-# password by default and we want to have this minimal level of security
-if [ -z "$PASSWORD" ]; then
-    PASSWORD=$(< /dev/urandom tr -dc A-Z-a-z-0-9 | head -c8)
-    echo "==========="
-    echo "== Root Password is $PASSWORD"
-    echo "==========="
-    echo
-fi
+# Make sure we have a root password so we can login. We use a random
+# password and disallow password based authentication
+PASSWORD=$(< /dev/urandom tr -dc A-Z-a-z-0-9 | head -c16)
+echo "==========="
+echo "== Root Password is $PASSWORD"
+echo "==========="
+echo
+
 echo "root:${PASSWORD}" | chpasswd
 
 # Directory for HOSTKEYS, create if necessary
@@ -77,6 +76,8 @@ fi
 if [ -n "${PASSWORD}" ]; then
     sed -i "s;\#PermitRootLogin .*;PermitRootLogin yes;g" $SDIR/sshd_config
 fi
+
+sed -i "s;\#PasswordAuthentication.*;PasswordAuthentication no;g" $SDIR/sshd_config
 
 # Fix permissions and access to the .ssh directory (in case it was shared with
 # the host)
